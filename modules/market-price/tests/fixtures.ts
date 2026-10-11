@@ -1,5 +1,63 @@
-import { sourceSchema, productSchema, candidateSchema } from "../backend/contracts.ts";
-export const source=sourceSchema.parse({source_id:'fixture',name:'固定测试信源',type:'json_api',url:'https://example.org/prices',region_code:'340100',price_type:'retail',publisher_key:'fixture-publisher',trust_score:1,enabled:true,config:{items_path:'data',fields:{product_name:'name',variant:'variant',price_value:'price',price_unit:'unit',observed_at:'date',market_name:'market',source_record_id:'id'},terms_confirmed:true}});
-export const products=[productSchema.parse({product_id:'tomato',name:'番茄',category:'蔬菜',variant:'普通番茄',aliases:['西红柿']}),productSchema.parse({product_id:'potato',name:'土豆',category:'蔬菜',variant:'普通土豆',aliases:['洋芋','马铃薯']})];
-export const candidate=candidateSchema.parse({product_name:'番茄',variant:'普通番茄',region_code:'340100',price_value:4.8,price_unit:'元/公斤',price_type:'retail',observed_at:'2026-02-05',source_url:'https://example.org/prices',evidence_text:'2026年02月05日，普通番茄4.80元/公斤',source_record_id:'record-001'});
-export const fullSource={...source,last_success_at:null,next_fetch_at:null,last_error:null};
+import {
+  sourceSchema,
+  productSchema,
+  candidateSchema,
+} from "../backend/contracts.ts";
+export const source = sourceSchema.parse({
+  source_id: "fixture",
+  name: "固定测试信源",
+  type: "json_api",
+  url: "https://example.org/prices",
+  region_code: "340100",
+  price_type: "retail",
+  publisher_key: "fixture-publisher",
+  trust_score: 1,
+  enabled: true,
+  config: {
+    items_path: "data",
+    fields: {
+      product_name: "name",
+      variant: "variant",
+      price_value: "price",
+      price_unit: "unit",
+      observed_at: "date",
+      market_name: "market",
+      source_record_id: "id",
+    },
+    terms_confirmed: true,
+  },
+});
+export const products = [
+  productSchema.parse({
+    product_id: "tomato",
+    name: "番茄",
+    category: "蔬菜",
+    variant: "普通番茄",
+    aliases: ["西红柿"],
+  }),
+  productSchema.parse({
+    product_id: "potato",
+    name: "土豆",
+    category: "蔬菜",
+    variant: "普通土豆",
+    aliases: ["洋芋", "马铃薯"],
+  }),
+];
+export const candidate = candidateSchema.parse({
+  product_name: "番茄",
+  variant: "普通番茄",
+  region_code: "340100",
+  price_value: 4.8,
+  price_unit: "元/公斤",
+  price_type: "retail",
+  observed_at: "2026-02-05",
+  source_url: "https://example.org/prices",
+  evidence_text: "2026年02月05日，普通番茄4.80元/公斤",
+  source_record_id: "record-001",
+});
+export const fullSource = {
+  ...source,
+  last_success_at: null,
+  next_fetch_at: null,
+  last_error: null,
+};

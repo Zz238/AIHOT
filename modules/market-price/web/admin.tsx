@@ -56,9 +56,14 @@ export async function loader({
 }): Promise<Loaded> {
   const section = params.section ?? "overview";
   if (!(section in sections)) throw new Response("页面不存在", { status: 404 });
+  const search = new URL(request.url).searchParams;
+  // Single-fetch navigation metadata belongs to the router, not the price API.
+  search.delete("_routes");
+  search.delete("index");
+  const query = search.toString();
   const data = await adminGet(
     request,
-    `/api/admin/market/${section}${new URL(request.url).search}`,
+    `/api/admin/market/${section}${query ? `?${query}` : ""}`,
   );
   return { section: section as Section, [section]: data };
 }
