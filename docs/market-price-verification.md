@@ -5,7 +5,7 @@
 - Repository：`https://github.com/Zz238/AIHOT`，用户账户下的 Fork；上游 `KKKKhazix/AIHOT` 没有推送或合并。
 - Branch：`feat/market-price-backend`，没有修改 main/master。
 - Base Commit：`931a4eb5edf344b12b9e65f0d039f7c52a2e0792`。
-- 本次功能验证对应代码提交：`7d00513`；文档提交之后的 Latest Commit 以 `git rev-parse HEAD` 为准。草稿 PR 地址在最终交付报告提供。
+- 本次功能验证对应代码提交：`7d00513`；文档提交之后的 Latest Commit 以 `git rev-parse HEAD` 为准。草稿 PR：[Zz238/AIHOT #1](https://github.com/Zz238/AIHOT/pull/1)，目标为 Fork 的 `main`，尚未合并。
 - 本地代码：`E:/市场价/AIHOT-backend`；运行页面 `http://localhost:3000/admin/market/overview`。
 - 原 Taro 目录的未提交修改仍保留，没有为本次后台开发覆盖、暂存或提交它们。
 
@@ -79,6 +79,8 @@ node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test
 5. Web 浏览器类测试的 18 项在启动/前置阶段失败，日志为 `Executable doesn't exist ... ms-playwright/chromium-1228/chrome-win64/chrome.exe` 等。尝试安装 Chromium/WebKit 后下载极慢，未完成；系统浏览器和实际页面验证不能替代这些原测试。32 个不依赖缺失浏览器的用例通过。
 
 后续应在原 Linux CI 或具备 PostgreSQL 17 客户端、POSIX shell、Playwright Chromium/WebKit 的环境重跑原命令。保留原 GitHub workflow，没有削减其 typecheck、浏览器、完整测试、Docker 和 smoke 检查。最终报告单独给出 PR/CI 状态，未跑完或没有启动都不能算通过。
+
+PR 创建后实际核对：Fork 的 main 仍为上述基线，`.github/workflows/check.yml` 存在；GitHub Actions API 返回空工作流和运行列表，按文件名查询及手动 dispatch 都返回 404。因此本次没有获得远端 Linux/Docker 检查结果。没有修改主分支或合并 PR 来触发执行，也没有据此宣称 Docker 验证通过。
 
 ## 未验证和已知限制
 
