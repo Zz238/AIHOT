@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS market_briefs (region_code text NOT NULL, date date NOT NULL, price_type text NOT NULL, text text NOT NULL, metrics jsonb NOT NULL, input_version text NOT NULL, model_version text NOT NULL, generated_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(region_code,date,price_type));

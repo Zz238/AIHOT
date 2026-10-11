@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS market_products (product_id text PRIMARY KEY, name text NOT NULL, category text NOT NULL, subcategory text NOT NULL DEFAULT '', variant text NOT NULL DEFAULT '', default_unit text NOT NULL DEFAULT '元/斤', created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), UNIQUE(name, variant));

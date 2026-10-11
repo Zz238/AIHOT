@@ -43,7 +43,7 @@ services:
   setup:
     <<: *backend
     restart: "no"
-    command: ["sh", "-c", "node scripts/migrate.ts && node scripts/seed.ts"]
+    command: ["sh", "-c", "node scripts/migrate.ts && node scripts/seed.ts && node modules/market-price/scripts/seed.ts"]
 
   api:
     <<: *backend
