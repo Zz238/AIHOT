@@ -6,6 +6,7 @@ import { normalizeUnit,observationTime,findProduct,validate } from "../backend/n
 import { extractRules,verifyExtracted } from "../backend/extract.ts";
 import { summarize } from "../backend/statistics.ts";
 import { candidate,fullSource,products } from "./fixtures.ts";
+import { querySchema } from "../backend/contracts.ts";
 const fixture=(name:string)=>readFileSync(new URL(`fixtures/${name}`,import.meta.url),'utf8');
 
 test('固定 JSON 字段映射及 HTML 表格解析',()=>{
@@ -27,6 +28,8 @@ test('别名映射保持规格隔离，公斤转市斤，包装无重量拒绝�
 });
 test('日期按北京时间解析并拒绝不存在或含糊日期',()=>{
   assert.equal(observationTime('2026-02-05')?.instant,'2026-02-04T16:00:00.000Z');assert.equal(observationTime('2026-02-30'),null);assert.equal(observationTime('02-05'),null);
+  assert.equal(observationTime('2026-02-30T10:00:00+08:00'),null);
+  assert.throws(()=>querySchema.parse({date:'2026-02-30'}));
 });
 test('历史不当今日、异常波动待审核、未知规格与日期待审核',()=>{
   const old=validate(candidate,fullSource,products,{now:new Date('2026-10-11')});assert.ok(old.quality_flags.includes('historical_reference'));assert.equal(old.observation_date,'2026-02-05');
@@ -50,6 +53,9 @@ test('AI 输出数字、原文片段及日期缺乏证据时拒绝',()=>{
   assert.throws(()=>verifyExtracted([{...candidate,price_value:99}],original),/价格数字/);
   assert.throws(()=>verifyExtracted([{...candidate,observed_at:'2026-10-11'}],original),/日期/);
   assert.throws(()=>verifyExtracted([{...candidate,evidence_text:'模型猜测'}],original),/证据片段/);
+  assert.throws(()=>verifyExtracted([{...candidate,price_value:2026}],original),/价格数字/);
+  assert.throws(()=>verifyExtracted([{...candidate,price_unit:'元/盒',weight_grams:1000}],original),/单位/);
+  assert.throws(()=>verifyExtracted([{...candidate,price_unit:'元/盒',weight_grams:1000,evidence_text:'普通番茄4.80元/盒',observed_at:null}],'普通番茄4.80元/盒'),/重量/);
 });
 test('robots 禁止路径及非法分页结构明确失败',()=>{
   assert.equal(robotsAllowed('User-agent: *\nDisallow: /private','/private/prices'),false);

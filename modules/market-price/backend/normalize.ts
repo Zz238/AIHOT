@@ -16,6 +16,11 @@ export function observationTime(value: string | null): { instant: string; date: 
   const plain = /^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})日?$/.exec(value.trim());
   const input = plain ? `${plain[1]}-${plain[2].padStart(2, "0")}-${plain[3].padStart(2, "0")}T00:00:00+08:00` : value;
   if (!plain && !/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(input)) return null;
+  if (!plain) {
+    const calendar = input.slice(0, 10);
+    const day = new Date(`${calendar}T00:00:00Z`);
+    if (!Number.isFinite(day.getTime()) || day.toISOString().slice(0, 10) !== calendar) return null;
+  }
   const at = new Date(input);
   if (!Number.isFinite(at.getTime())) return null;
   const date = new Date(at.getTime() + 8 * 3600000).toISOString().slice(0, 10);
@@ -45,7 +50,7 @@ export function validate(candidate: Candidate, source: Pick<Source, "source_id" 
   if (opts.marketValid === false) flags.push("unmapped_or_wrong_region_market");
   if (normalized && opts.previousPrice && Math.abs(normalized.price / opts.previousPrice - 1) > 0.5) flags.push("abnormal_price_change");
   const status = !normalized || flags.includes("future_observation_date") ? "rejected" : flags.some(f => f !== "historical_reference") ? "pending" : "verified";
-  const scope = [candidate.product_name, candidate.variant, candidate.region_code, candidate.market_id ?? candidate.market_name, candidate.price_type, observed?.date ?? candidate.observed_at];
+  const scope = [product?.product_id ?? candidate.product_name, candidate.variant, candidate.region_code, candidate.market_id ?? candidate.market_name, candidate.price_type, observed?.date ?? candidate.observed_at];
   const record = candidate.source_record_id ?? candidate.source_url;
   return { candidate, product_id: product?.product_id ?? null, normalized_price: normalized?.price ?? null, normalized_unit: normalized?.unit ?? null,
     observed_at: observed?.instant ?? null, observation_date: observed?.date ?? null, review_status: status, quality_flags: flags,

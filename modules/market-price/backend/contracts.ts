@@ -4,6 +4,10 @@ export const priceTypes = ["wholesale", "retail", "supermarket", "user_report", 
 export const priceType = z.enum(priceTypes);
 const text = (max = 200) => z.string().trim().min(1).max(max);
 export const regionCode = z.string().regex(/^\d{6}$/);
+export const calendarDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}, "日期不存在");
 export const candidateSchema = z.strictObject({
   product_name: text(), variant: z.string().trim().max(200).default(""),
   region_code: regionCode, market_id: z.string().max(120).nullable().default(null),
@@ -56,8 +60,8 @@ export const reviewSchema = z.strictObject({
 }).refine(r => !r.corrected_unit || !!r.unit_evidence, { message: "更正单位必须提供原文中可核对的单位证据" });
 export const querySchema = z.strictObject({
   region_code: regionCode.default("340100"), product_id: z.string().max(120).optional(), category: z.string().max(80).optional(),
-  price_type: priceType.default("retail"), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  price_type: priceType.default("retail"), date: calendarDate.optional(),
+  from: calendarDate.optional(), to: calendarDate.optional(),
   days: z.coerce.number().pipe(z.union([z.literal(7), z.literal(30), z.literal(90)])).default(7),
   page: z.coerce.number().int().min(1).max(10000).default(1), limit: z.coerce.number().int().min(1).max(100).default(30),
 });
