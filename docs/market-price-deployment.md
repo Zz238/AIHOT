@@ -1,6 +1,6 @@
 # 菜价雷达部署与运维
 
-代码已在 Node 24.19、PostgreSQL 17.9、Windows 隔离本地库运行，API/Worker/Web 均已启动。本次没有生产部署、真实外部价格采集、付费模型调用或外发告警。Docker CLI 和 WSL 在此机器不可用，因此 **Docker 构建/Compose 启动尚未实测**；以下是与现有 Compose 集成后的部署步骤，不能视为已验收的镜像。
+代码已在 Node 24.19、PostgreSQL 17.9、Windows 隔离本地库运行；2026-10-12 的 [GitHub Check #1](https://github.com/Zz238/AIHOT/actions/runs/38233260346) 已通过 Docker 镜像构建、Compose 启动和 30 项运行检查。本机没有 Docker/WSL，Docker 验证由隔离 Ubuntu runner 完成。本次没有生产部署、真实外部价格采集、付费模型调用或外发告警；CI 通过不等于生产配置已验收。
 
 ## 环境配置
 
@@ -122,4 +122,4 @@ docker compose exec -T db pg_restore -U aihot --exit-on-error --no-owner -d aiho
 
 核对恢复结果后由部署者决定切换连接；不要直接删除原库。代码回滚可切换此前发布版本，同时保留新价格表和证据；首先停调度/Worker，避免回滚时继续写入。没有提供自动 DROP 价格表的下迁移。需要撤销结构时必须另做数据备份和审批，不能删除或修改历史迁移。
 
-本次已验证新迁移在隔离库和测试模板执行；生产备份恢复、上述 Compose 命令与 Docker 构建未实测。测试命令、失败和未验证事项见 [验收记录](market-price-verification.md)。
+新迁移已在隔离库和测试模板执行；Docker 构建及 `docker compose up -d --build`、原运行检查已在 GitHub Ubuntu runner 实测通过。生产备份恢复及本节手动备份/恢复命令未在生产环境执行。测试命令、各环境结果和剩余未验证事项见 [验收记录](market-price-verification.md)。
