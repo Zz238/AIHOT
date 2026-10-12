@@ -72,11 +72,13 @@ node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test
 
 ## 失败与复测
 
-1. 完整回归中的 8 个 `backup.test.ts` 用例失败，日志为 `spawn pg_dump ENOENT`。本机临时 PostgreSQL 运行包没有提供可从 PATH 调用的备份工具；部分用例还要求 POSIX shell。未修改备份实现或测试，**真实备份恢复仍未验收**。
-2. `outbound-protocol.standalone.test.ts` 的两个子用例及文件失败；Windows Node 输出 `Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)`，进程退出码 3221226505。可以确认是该测试进程异常退出，尚未通过基线对比确认全部归因，未将其报告成上游已知缺陷。
+1. 完整回归中的 8 个 `backup.test.ts` 用例失败：其中 6 个为 `spawn pg_dump ENOENT`，2 个打包重试用例为 `spawn sh ENOENT`。当前测试进程找不到 PostgreSQL 备份工具和 POSIX shell，不是数据库密码或对象存储密钥错误；对象存储由本地替身接收。未修改备份实现或测试，**真实备份恢复仍未验收**。
+2. 网络相关的 3 项失败需要分开说明：`outbound-headers.standalone.test.ts` 的 direct/proxy 两项输出 Windows Node/libuv 断言 `Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)`，进程退出码 3221226505；`outbound-protocol.standalone.test.ts` 则在文件初始化时 `spawn openssl ENOENT`，尚未进入其四个协议子用例。OpenSSL 用于生成本地临时测试证书，不需要生产 HTTPS 证书或私钥。进程崩溃的具体根因尚未通过基线及 Linux 对比确认，不报告成已确定的上游缺陷。
 3. `timeline-day-counts.test.ts` 在完整并发运行中，测试初始化报临时数据库 `market_final_test_f39356_test` 已存在（42P04）。单独运行同一原测试文件，**3/3 通过**；完整那一轮的失败数保持原值，不据此改称全套通过。
 4. 分析退出 3 项和翻译退出 2 项 SIGTERM 测试超过 120 秒，执行器标为 cancelled。当前判断与 Windows 信号/进程语义有关，但没有 Linux 复验，不作为已确定根因。
 5. Web 浏览器类测试的 18 项在启动/前置阶段失败，日志为 `Executable doesn't exist ... ms-playwright/chromium-1228/chrome-win64/chrome.exe` 等。尝试安装 Chromium/WebKit 后下载极慢，未完成；系统浏览器和实际页面验证不能替代这些原测试。32 个不依赖缺失浏览器的用例通过。
+
+2026-10-12 重新逐项核对原日志，修正了此前把备份失败全部概括为 pg_dump、把协议与响应头测试合并为进程崩溃的归类。完整回归的 12 项为：6 个 pg_dump 缺失 + 2 个 sh 缺失 + 2 个响应头测试进程崩溃 + 1 个 openssl 缺失的协议测试文件 + 1 个测试数据库重名。5 项超时与 18 项网页测试失败另外计数。以上都不依赖真实价格信源或付费模型 Key。
 
 后续应在原 Linux CI 或具备 PostgreSQL 17 客户端、POSIX shell、Playwright Chromium/WebKit 的环境重跑原命令。保留原 GitHub workflow，没有削减其 typecheck、浏览器、完整测试、Docker 和 smoke 检查。最终报告单独给出 PR/CI 状态，未跑完或没有启动都不能算通过。
 
