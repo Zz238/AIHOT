@@ -84,6 +84,8 @@ node --test-global-setup=tests/databases.ts --import ./tests/databases.ts --test
 
 PR 创建后实际核对：Fork 的 main 仍为上述基线，`.github/workflows/check.yml` 存在；GitHub Actions API 返回空工作流和运行列表，按文件名查询及手动 dispatch 都返回 404。因此本次没有获得远端 Linux/Docker 检查结果。没有修改主分支或合并 PR 来触发执行，也没有据此宣称 Docker 验证通过。
 
+2026-10-12 用户提供新的 GitHub 截图：Actions 已启用，左侧已识别 `Check` 工作流，运行记录仍为 0。工作流识别状态已经变化，需取得新的 Linux/Docker 运行结果后再更新验收结论；上述本地失败数字保留，不用启用状态代替测试通过。
+
 ## 未验证和已知限制
 
 - 真实公开报价源、授权、生产模型服务及预算、真实告警发送、真实微信登录会话尚未接入；用户上报交付的是可验证适配层，不是已部署的微信身份系统。
