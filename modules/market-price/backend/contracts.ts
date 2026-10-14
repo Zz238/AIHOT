@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { anhuiRegion } from "./anhui-regions.ts";
 
 export const priceTypes = [
   "wholesale",
@@ -94,10 +95,10 @@ export const sourceSchema = z
   })
   .refine((s) => s.config.adapter !== "anhui_weekly" || (
     s.type === "html_table" && s.url === "https://ahjgxx.in.ah.cn/jfcx/sp/" &&
-    ["340100", "340000"].includes(s.region_code) && !s.market_id && s.price_type === "unknown" &&
+    !!anhuiRegion(s.region_code) && !s.market_id && s.price_type === "unknown" &&
     s.config.goods_codes.length > 0 && new Set(s.config.goods_codes).size === s.config.goods_codes.length
   ), {
-    message: "安徽监测源需使用官方查询页、合肥或安徽地区、1–10 个不重复商品代码，不设置单个市场",
+    message: "安徽监测源需使用官方查询页、安徽省或其16个地级市、1–10 个不重复商品代码，不设置单个市场",
   });
 export type SourceInput = z.infer<typeof sourceSchema>;
 export type Source = SourceInput & {

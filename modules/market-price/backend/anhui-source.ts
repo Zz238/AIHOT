@@ -4,6 +4,7 @@ import { setTimeout } from "node:timers/promises";
 import { fetchListing } from "@aihot/backend/sources/listing-fetch";
 import { sourceSchema, type Source } from "./contracts.ts";
 import { parseAnhuiEnvelope, previewAnhuiWeekly, type AnhuiEnvelope } from "./anhui-preview.ts";
+import { anhuiRegion, anhuiRegions } from "./anhui-regions.ts";
 
 const origin = "https://ahjgxx.in.ah.cn";
 const page = `${origin}/jfcx/sp/`;
@@ -21,14 +22,18 @@ const categorySchema = z.object({ code: text, name: text });
 const productSchema = z.object({ code: text, name: text, standard: text, unit: text });
 const regionSchema = z.object({ regionCode: text, regionName: text });
 
-export function anhuiSourcePreset() {
+export function anhuiSourcePreset(regionCode = "340100") {
+  const region = anhuiRegion(regionCode);
+  if (!region || regionCode.length !== 6) throw new Error("安徽来源未提供该地区");
   return sourceSchema.parse({
-    source_id: "anhui-hefei-monitoring", name: "安徽价格信息网 · 合肥每周监测",
-    type: "html_table", url: page, region_code: "340100", price_type: "unknown",
+    source_id: regionCode === "340100" ? "anhui-hefei-monitoring" : `anhui-${regionCode}-monitoring`, name: `安徽价格信息 · ${region.name}每周监测`,
+    type: "html_table", url: page, region_code: regionCode, price_type: "unknown",
     publisher_key: "anhui-price-monitoring-bureau", interval_minutes: 10080,
     enabled: false, config: { adapter: "anhui_weekly", goods_codes: ["101001", "101005", "103007"] },
   });
 }
+
+export const anhuiSourcePresets = () => anhuiRegions.map(region => anhuiSourcePreset(region.region_code));
 
 /** Read the site's public query flow; its page-provided access parameters stay in memory only. */
 export async function collectAnhuiWeekly(
@@ -70,12 +75,13 @@ export async function collectAnhuiWeekly(
     try { return JSON.parse(body); } catch { throw new Error("安徽查询未返回有效 JSON"); }
   };
   const categories = catalogResponse.parse(await query("categories", { classId: "100000" })).data.map((row) => categorySchema.parse(row));
-  const sourceRegionCode = source.region_code === "340100" ? "340100000" : "340000000";
+  const expectedRegion = anhuiRegion(source.region_code)!;
+  const sourceRegionCode = expectedRegion.source_region_code;
   const regionRows = catalogResponse.parse(await query("regions", {})).data.map((row) => regionSchema.parse(row));
   const region = sourceRegionCode === "340000000"
     ? { regionCode: sourceRegionCode, regionName: "安徽省" }
-    : regionRows.find((row) => row.regionCode === sourceRegionCode && row.regionName === "合肥市");
-  if (!region) throw new Error("安徽来源目录没有已核实的合肥地区");
+    : regionRows.find((row) => row.regionCode === sourceRegionCode && row.regionName === expectedRegion.name);
+  if (!region) throw new Error("安徽来源目录没有对应的已核实地区");
   const goods = new Map<string, z.infer<typeof productSchema>>();
   for (const code of new Set(source.config.goods_codes.map((value) => `${value.slice(0, 3)}000`))) {
     if (!categories.some((row) => row.code === code)) throw new Error("选定商品类别已不在安徽来源目录");

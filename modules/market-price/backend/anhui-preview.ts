@@ -2,6 +2,7 @@ import { z } from "zod";
 import { sha256, stableJson } from "@aihot/backend/lib/ids";
 import { calendarDate } from "./contracts.ts";
 import { normalizeUnit } from "./normalize.ts";
+import { anhuiRegion } from "./anhui-regions.ts";
 
 const sourcePage = "https://ahjgxx.in.ah.cn/jfcx/sp/";
 const text = z.string().trim().min(1).max(200);
@@ -11,7 +12,7 @@ const envelopeSchema = z.strictObject({
     tabCode: z.literal("100000"),
     classCode: z.enum(["101000", "102000", "103000", "104000", "105000"]),
     goodsCode: z.string().regex(/^10[1-5]\d{3}$/),
-    regionCode: z.enum(["340100000", "340000000"]),
+    regionCode: z.string().refine(code => !!anhuiRegion(code) && code.length === 9, "安徽来源未提供该地区"),
     marketPrice: z.literal("0"),
   }),
   catalog: z.strictObject({
@@ -69,9 +70,7 @@ export function previewAnhuiWeekly(input: unknown, options: { offline?: boolean;
   const { query, catalog, response } = envelope;
   const data = response.data;
   if (response.message) throw new Error(`来源查询未成功：${response.message}`);
-  const region = query.regionCode === "340100000"
-    ? { region_code: "340100", name: "合肥市", scope: "city" as const }
-    : { region_code: "340000", name: "安徽省", scope: "province" as const };
+  const region = anhuiRegion(query.regionCode)!;
   if (catalog.region.regionCode !== query.regionCode || catalog.region.regionName !== region.name)
     throw new Error("查询地区和来源地区目录冲突");
   if (catalog.product.code !== query.goodsCode || catalog.product.category_code !== query.classCode ||
@@ -130,7 +129,7 @@ export function previewAnhuiWeekly(input: unknown, options: { offline?: boolean;
       "原站注明全省或各市均价；每周发布不代表已确认按整周交易计算的平均价。",
       "只保留实际监测日期，不补齐日价；图表和表格为同一数据，不增加独立样本。",
       "原站图表将零值按缺报显示；缺报保留空值，不插值。",
-      "地区监测均价独立保存，不进入单条报价样本池或公开价格接口。",
+      "地区监测均价独立保存，不进入单条报价样本池；经确认使用范围后通过独立监测接口展示。",
       ...((options.termsConfirmed ?? false) ? [] : ["网站使用许可尚未确认；当前只做解析预览。"]),
     ],
   };

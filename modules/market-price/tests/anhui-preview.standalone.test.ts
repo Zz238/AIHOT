@@ -2,9 +2,24 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 import { previewAnhuiWeekly } from "../backend/anhui-preview.ts";
+import { anhuiRegions } from "../backend/anhui-regions.ts";
 
 const fixture = JSON.parse(await readFile(new URL("./fixtures/anhui-weekly-excerpt.json", import.meta.url), "utf8"));
 const sample = () => structuredClone(fixture);
+
+test("安徽16个市地区隔离，不接受区县或跨地区目录", () => {
+  const cities = anhuiRegions.filter(region => region.scope === "city");
+  assert.equal(cities.length, 16);
+  for (const region of cities) {
+    const value = sample(); value.query.regionCode = value.catalog.region.regionCode = region.source_region_code;
+    value.catalog.region.regionName = region.name;
+    assert.equal(previewAnhuiWeekly(value).region.region_code, region.region_code);
+    value.catalog.region.regionName = "不对应的地区";
+    assert.throws(() => previewAnhuiWeekly(value), /地区/);
+  }
+  const district = sample(); district.query.regionCode = district.catalog.region.regionCode = "340102000";
+  assert.throws(() => previewAnhuiWeekly(district));
+});
 
 test("每周地区均价保留两个价格类型与实际日期，不补齐日价或重复计算图表", () => {
   const result = previewAnhuiWeekly(sample());

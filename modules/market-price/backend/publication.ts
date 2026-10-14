@@ -1,7 +1,64 @@
 // The price module's only public read layer: no raw payloads, secrets or pending observations escape.
-import { sql } from "@aihot/backend/db";
+import { sql, type Db } from "@aihot/backend/db";
+import { z } from "zod";
 import type { MarketQuery } from "./contracts.ts";
 import { marketConfig } from "./config.ts";
+import { anhuiRegion, anhuiRegions } from "./anhui-regions.ts";
+import { previewAnhuiWeekly } from "./anhui-preview.ts";
+
+export const monitoringQuerySchema = z.strictObject({
+  region_code: z.string().length(6).refine(code => !!anhuiRegion(code)),
+  goods_code: z.string().regex(/^10[1-5]\d{3}$/).optional(),
+});
+
+/** 仅返回展示字段，均价不转换成日价样本，不输出原始响应或查询访问参数。 */
+export function monitoringReference(input: unknown, collectedAt: string | Date) {
+  const ref = previewAnhuiWeekly(input);
+  const retail = ref.reference_series.find(series => series.price_type === "retail")!;
+  const wholesale = ref.reference_series.find(series => series.price_type === "wholesale")!;
+  const history = retail.points.map((point, index) => ({
+    date: point.reference_date, retail: point.normalized_price, wholesale: wholesale.points[index].normalized_price,
+  }));
+  return {
+    goods_code: ref.product.source_goods_code, name: ref.product.name, variant: ref.product.variant,
+    category_code: ref.query.classCode, region_code: ref.region.region_code,
+    latest_reference_date: ref.latest_reference_date, unit: "元/斤" as const,
+    latest: { retail: history.at(-1)!.retail, wholesale: history.at(-1)!.wholesale }, history,
+    collected_at: new Date(collectedAt).toISOString(),
+  };
+}
+
+export function monitoringResponse(regionCode: string, data: ReturnType<typeof monitoringReference>[]) {
+  const region = anhuiRegion(regionCode)!;
+  return {
+    source_name: "安徽价格信息", source_url: "https://ahjgxx.in.ah.cn/jfcx/sp/",
+    region_code: region.region_code, region_name: region.name, scope: region.scope,
+    publication_frequency: "weekly", data,
+    notice: "各市监测均价，按原始监测日期展示；仅供参考，不作为交易依据。缺报留空，不补齐日价。",
+  };
+}
+
+export async function monitoringCities(db: Db = sql) {
+  const rows = await db`SELECT m.region_code,count(DISTINCT m.goods_code)::int AS product_coverage
+    FROM market_monitoring_snapshots m JOIN market_sources s ON s.source_id=m.source_id
+    WHERE s.enabled AND s.config->>'adapter'='anhui_weekly' AND s.config->>'terms_confirmed'='true'
+    GROUP BY m.region_code`;
+  return { data: anhuiRegions.map(region => ({ ...region,
+    product_coverage: rows.find(row => row.region_code === region.region_code)?.product_coverage ?? 0,
+  })), notice: "来源提供安徽省及16个地级市；未提供区县级价格。可选地区不代表全部商品均有数据。" };
+}
+
+export async function monitoring(raw: unknown, db: Db = sql) {
+  const query = monitoringQuerySchema.parse(raw);
+  // 每地区、商品只取最新版本。停用或撤销使用范围后，旧快照不再公开。
+  const rows = await db`SELECT DISTINCT ON (m.goods_code) m.payload,m.collected_at
+    FROM market_monitoring_snapshots m JOIN market_sources s ON s.source_id=m.source_id
+    WHERE m.region_code=${query.region_code} AND s.region_code=m.region_code AND s.enabled
+      AND s.config->>'adapter'='anhui_weekly' AND s.config->>'terms_confirmed'='true'
+      AND (${query.goods_code ?? null}::text IS NULL OR m.goods_code=${query.goods_code ?? null})
+    ORDER BY m.goods_code,m.collected_at DESC,m.id DESC`;
+  return monitoringResponse(query.region_code, rows.map(row => monitoringReference(row.payload, row.collected_at)));
+}
 
 export const beijingToday = () =>
   new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10);

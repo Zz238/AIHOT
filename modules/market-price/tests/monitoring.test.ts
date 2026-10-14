@@ -8,7 +8,7 @@ import { saveSource, loadSource } from "../backend/repository.ts";
 import { anhuiSourcePreset } from "../backend/anhui-source.ts";
 import { storeMonitoring, monitoringSnapshots } from "../backend/monitoring.ts";
 import { parseAnhuiEnvelope } from "../backend/anhui-preview.ts";
-import { prices } from "../backend/publication.ts";
+import { prices, monitoring, monitoringCities } from "../backend/publication.ts";
 import { querySchema } from "../backend/contracts.ts";
 
 after(closeDb);
@@ -31,6 +31,17 @@ test("监测内容重放去重、修订保留旧证据，并且不生成单摊�
   assert.ok(snapshots.some((row) => row.reference.reference_series[0].points.at(-1)?.normalized_price === 2.99));
   assert.equal((await sql`SELECT id FROM market_observations WHERE source_id=${source.source_id}`).length, 0);
   assert.equal((await prices(querySchema.parse({ date: "2026-10-13" }))).data.length, 0);
+  assert.equal((await monitoring({ region_code: "340100" })).data.length, 0, "停用来源不公开快照");
+  await sql`UPDATE market_sources SET enabled=true WHERE source_id=${source.source_id}`;
+  const visible = await monitoring({ region_code: "340100", goods_code: "101001" });
+  assert.equal(visible.source_name, "安徽价格信息");
+  assert.equal(visible.data.length, 1, "修订不会增加商品或样本数");
+  assert.equal(visible.data[0].latest.retail, 3.01);
+  assert.equal(visible.data[0].latest.wholesale, 2);
+  assert.equal((await monitoring({ region_code: "340200" })).data.length, 0, "不借用邻市均价");
+  assert.equal((await monitoringCities()).data.filter(region => region.scope === "city").length, 16);
+  await sql`UPDATE market_sources SET config=jsonb_set(config,'{terms_confirmed}','false'::jsonb) WHERE source_id=${source.source_id}`;
+  assert.equal((await monitoring({ region_code: "340100" })).data.length, 0, "撤销使用范围立即停止读取");
   await assert.rejects(saveSource({ ...anhuiSourcePreset(), region_code: "340000" }, "test", "验证已有地区不可改写"), /已有监测记录/);
   const province = structuredClone(sample); province.query.regionCode = province.catalog.region.regionCode = "340000000"; province.catalog.region.regionName = "安徽省";
   await assert.rejects(sql.begin((db) => storeMonitoring(source, "monitoring-local-run", [province], db)), /地区/);

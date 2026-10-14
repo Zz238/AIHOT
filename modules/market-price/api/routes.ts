@@ -193,6 +193,8 @@ export function registerMarket(app: FastifyInstance) {
     "/api/market/v1/cities",
     publicRoute(() => publication.cities()),
   );
+  app.get("/api/market/v1/monitoring/cities", publicRoute(() => publication.monitoringCities()));
+  app.get("/api/market/v1/monitoring", publicRoute(req => publication.monitoring(req.query)));
   app.get(
     "/api/market/v1/products",
     publicRoute((req) => publication.products(query(req))),
