@@ -1,6 +1,6 @@
 # 菜价雷达 API
 
-基础路径 `/api/market/v1`。公开读取无需采集 Token，仅查询 PostgreSQL 中已核验样本的汇总，不调用模型。价格单位 `元/斤` 指元/市斤（500g），不是公斤。
+基础路径 `/api/market/v1`。公开读取无需采集 Token，不触发采集或模型调用。日价接口查询已核验样本汇总，监测接口独立查询已确认使用范围的地区均价快照。价格单位 `元/斤` 指元/市斤（500g），不是公斤。
 
 ## 公开接口
 
@@ -12,6 +12,10 @@
 | `/products/:id` | 商品、最近已核验报价、来源和三个时间 |
 | `/products/:id/history` | 7/30/90 天实际历史日汇总 |
 | `/briefs/daily` | 指定地区、日期、类型的已生成简报；无则 `data:null` |
+| `/monitoring/cities` | 安徽省及16个地级市目录、已公开监测商品数；不含区县 |
+| `/monitoring?region_code=340100&goods_code=101005` | 对应地区与商品的最新保存版本，零售/批发分别展示实际监测日期序列；商品参数可选 |
+
+监测接口必须提供安徽六位地区代码，商品使用原站六位代码（例如西红柿101005），不使用日价层的`product_id`。未保存、停用或尚未确认使用范围时返回空数组，不借用省均价或邻市价格。`source_name`固定署名“安徽价格信息”，`latest_reference_date`为真实监测日期；`latest`及`history`同时保留`retail`、`wholesale`，缺报为`null`。只有真实监测节点，不补日价，不计算单摊样本区间。与其余接口的日价查询参数及7/30/90天窗口相互独立。
 
 通用查询参数：`region_code` 六位代码，默认 `MARKET_DEFAULT_REGION`；`price_type` 默认 `retail`；`date` 为实际日历 `YYYY-MM-DD`、默认北京时间今天；`category`、`product_id` 可筛选；`page` 1–10000、`limit` 1–100 默认 30。价格类型仅 `wholesale/retail/supermarket/user_report/unknown`，严格隔离。
 
