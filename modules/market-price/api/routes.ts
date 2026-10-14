@@ -37,6 +37,9 @@ import {
 import { enqueueOn, ensureQueue } from "@aihot/backend/jobs/queue";
 import { generateBrief } from "../backend/briefs.ts";
 import * as publication from "../backend/publication.ts";
+import { anhuiSourcePreset } from "../backend/anhui-source.ts";
+import { previewAnhuiWeekly } from "../backend/anhui-preview.ts";
+import { monitoringSnapshots } from "../backend/monitoring.ts";
 
 const body = (req: FastifyRequest) => req.body as Record<string, unknown>;
 const param = (req: FastifyRequest, key: string) =>
@@ -253,10 +256,13 @@ export function registerMarket(app: FastifyInstance) {
       const p = pager.parse(req.query);
       const data =
         await sql`SELECT * FROM market_sources ORDER BY name,source_id LIMIT ${p.limit + 1} OFFSET ${(p.page - 1) * p.limit}`;
+      const monitoringSource = z.string().min(1).max(120).optional().parse((req.query as Record<string, unknown>).monitoring_source);
       return {
         data: data.slice(0, p.limit),
         page: p.page,
         has_more: data.length > p.limit,
+        presets: [anhuiSourcePreset()],
+        monitoring: monitoringSource ? { source_id: monitoringSource, data: await monitoringSnapshots(monitoringSource) } : null,
       };
     }),
   );
@@ -335,6 +341,13 @@ export function registerMarket(app: FastifyInstance) {
         .strictObject({ sample: z.string().max(500000).optional() })
         .parse(body(req));
       if (b.sample !== undefined) {
+        if (source.config.adapter === "anhui_weekly") {
+          const sample = JSON.parse(b.sample);
+          const reference = previewAnhuiWeekly(sample);
+          if (reference.region.region_code !== source.region_code || !source.config.goods_codes.includes(reference.product.source_goods_code))
+            throw new SyntaxError("离线样本超出信源的地区或商品范围");
+          return { items: [], monitoring: [reference], offline: true };
+        }
         if (source.type === "json_api")
           return {
             items: parseJson(JSON.parse(b.sample), source),
@@ -349,7 +362,16 @@ export function registerMarket(app: FastifyInstance) {
         process.env.COLLECT_ENABLED !== "true"
       )
         throw new SyntaxError("真实试抓已关闭，请粘贴离线样本");
-      return { ...(await collect(source)), offline: false };
+      const result = await collect(source);
+      return { ...result, monitoring: result.monitoring?.map((input) => previewAnhuiWeekly(input, { offline: false, termsConfirmed: source.config.terms_confirmed })), offline: false };
+    }),
+  );
+  app.get(
+    "/api/admin/market/monitoring",
+    adminHandler(async (req) => {
+      const p = pager.parse(req.query);
+      if (!p.source_id) throw new SyntaxError("请指定监测信源");
+      return { data: await monitoringSnapshots(p.source_id, p.limit), notice: "地区监测均价，仅管理后台可见，不参与单条报价区间统计" };
     }),
   );
   app.get(

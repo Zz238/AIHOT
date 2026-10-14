@@ -28,7 +28,7 @@ import {
 export function Sources({
   data,
 }: {
-  data: { data: SourceView[]; page: number; has_more: boolean };
+  data: { data: SourceView[]; page: number; has_more: boolean; presets?: SourceInput[]; monitoring?: { source_id: string; data: unknown[] } | null };
 }) {
   const { run, busy } = useAdminAction();
   const [edit, setEdit] = useState<SourceInput | null>(null);
@@ -38,7 +38,7 @@ export function Sources({
   const [sampleSource, setSampleSource] = useState<SourceView | null>(null);
   const [sample, setSample] = useState("");
   const [preview, setPreview] = useState<unknown>(null);
-  const open = (row?: SourceView) => {
+  const open = (row?: SourceInput) => {
     const value = row
       ? {
           source_id: row.source_id,
@@ -66,9 +66,16 @@ export function Sources({
       <Card
         title="信源列表"
         right={
+          <div className="flex flex-wrap gap-2">
+          {(data.presets ?? []).map((preset) => (
+            <Button key={preset.source_id} onClick={() => open(data.data.find((source) => source.source_id === preset.source_id) ?? preset)}>
+              安徽监测源
+            </Button>
+          ))}
           <Button tone="primary" onClick={() => open()}>
             添加信源
           </Button>
+          </div>
         }
       >
         <DataTable
@@ -95,9 +102,9 @@ export function Sources({
               label: "类型 / 地区",
               render: (r) => (
                 <div>
-                  {sourceNames[r.type]}
+                  {r.config.adapter === "anhui_weekly" ? "安徽每周监测" : sourceNames[r.type]}
                   <div className="text-xs text-ink-3">
-                    {r.region_code} · {typeNames[r.price_type]}
+                    {r.region_code} · {r.config.adapter === "anhui_weekly" ? "零售 / 批发地区均价" : typeNames[r.price_type]}
                   </div>
                 </div>
               ),
@@ -176,6 +183,11 @@ export function Sources({
                   >
                     记录
                   </Link>
+                  {r.config.adapter === "anhui_weekly" && (
+                    <Link className="px-2 py-1 text-xs text-accent" to={`/admin/market/sources?monitoring_source=${encodeURIComponent(r.source_id)}`}>
+                      监测数据
+                    </Link>
+                  )}
                 </div>
               ),
             },
@@ -183,6 +195,12 @@ export function Sources({
         />
         <Pager page={data.page} hasMore={data.has_more} />
       </Card>
+      {data.monitoring && (
+        <Card title="地区监测参考">
+          <p className="mb-3 text-sm text-ink-3">{data.monitoring.source_id} · 每周发布的地区均价，保留原日期和规格。</p>
+          {data.monitoring.data.length ? <Json value={data.monitoring.data} collapsed={false} label="已保存的监测序列" /> : <p className="text-sm text-ink-3">尚无已保存的监测数据。完成来源配置并确认使用范围后，可执行采集。</p>}
+        </Card>
+      )}
       {edit && (
         <Card title="信源配置">
           <form
@@ -259,6 +277,7 @@ export function Sources({
                 />
               </Field>
               <Field label="价格类型">
+                {edit.config.adapter === "anhui_weekly" ? <p className="py-2 text-sm">零售 / 批发地区均价</p> : (
                 <Select
                   value={edit.price_type}
                   onChange={(e) =>
@@ -270,6 +289,7 @@ export function Sources({
                 >
                   <TypeOptions />
                 </Select>
+                )}
               </Field>
               <Field label="采集间隔（分钟）">
                 <Input
@@ -292,7 +312,7 @@ export function Sources({
                   onChange={(e) => change("publisher_key", e.target.value)}
                 />
               </Field>
-              <Field label="可信度（0–1）" hint="低于 0.8 的报价需要人工审核">
+              <Field label="可信度（0–1）" hint={edit.config.adapter === "anhui_weekly" ? "监测均价独立保存，暂不参与单条报价统计" : "低于 0.8 的报价需要人工审核"}>
                 <Input
                   type="number"
                   min={0}
@@ -307,7 +327,7 @@ export function Sources({
             </div>
             <Field
               label="解析与分页配置"
-              hint="fields 为 JSON 路径或表格 CSS 选择器；terms_confirmed 需核对来源许可后设为 true；认证只填写环境变量名"
+              hint={edit.config.adapter === "anhui_weekly" ? "goods_codes 选择需查询的商品，最多 10 个；来源使用范围确认后才将 terms_confirmed 设为 true" : "fields 为 JSON 路径或表格 CSS 选择器；terms_confirmed 需核对来源许可后设为 true；认证只填写环境变量名"}
             >
               <Textarea
                 rows={12}
@@ -343,8 +363,8 @@ export function Sources({
       {sampleSource && (
         <Card title={`解析预览 · ${sampleSource.name}`}>
           <p className="mb-3 text-sm text-ink-3">
-            粘贴固定 JSON 或 HTML
-            样本即可离线预览，预览结果不会入库。留空仅在真实采集已开启时试抓。
+            {sampleSource.config.adapter === "anhui_weekly" ? "粘贴包含查询参数、商品地区目录和返回数据的 JSON，即可预览地区监测序列。" : "粘贴固定 JSON 或 HTML 样本即可离线预览。"}
+            预览结果不会入库。留空仅在真实采集已开启时试抓。
           </p>
           <Textarea
             aria-label="离线样本"

@@ -44,6 +44,8 @@ export const candidateSchema = z.strictObject({
 });
 export type Candidate = z.infer<typeof candidateSchema>;
 export const sourceConfigSchema = z.strictObject({
+  adapter: z.enum(["generic", "anhui_weekly"]).default("generic"),
+  goods_codes: z.array(z.string().regex(/^10[1-5]\d{3}$/)).max(10).default([]),
   method: z.enum(["GET", "POST"]).default("GET"),
   auth_env: z
     .string()
@@ -89,6 +91,13 @@ export const sourceSchema = z
   })
   .refine((s) => ["external", "user_report"].includes(s.type) || !!s.url, {
     message: "采集信源必须配置 URL",
+  })
+  .refine((s) => s.config.adapter !== "anhui_weekly" || (
+    s.type === "html_table" && s.url === "https://ahjgxx.in.ah.cn/jfcx/sp/" &&
+    ["340100", "340000"].includes(s.region_code) && !s.market_id && s.price_type === "unknown" &&
+    s.config.goods_codes.length > 0 && new Set(s.config.goods_codes).size === s.config.goods_codes.length
+  ), {
+    message: "安徽监测源需使用官方查询页、合肥或安徽地区、1–10 个不重复商品代码，不设置单个市场",
   });
 export type SourceInput = z.infer<typeof sourceSchema>;
 export type Source = SourceInput & {

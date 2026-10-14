@@ -1,0 +1,37 @@
+import "../../../tests/setup.ts";
+import assert from "node:assert/strict";
+import test, { after } from "node:test";
+import { readFile } from "node:fs/promises";
+import { sql, closeDb } from "@aihot/backend/db";
+import { seedDictionary } from "../scripts/seed.ts";
+import { saveSource, loadSource } from "../backend/repository.ts";
+import { anhuiSourcePreset } from "../backend/anhui-source.ts";
+import { storeMonitoring, monitoringSnapshots } from "../backend/monitoring.ts";
+import { parseAnhuiEnvelope } from "../backend/anhui-preview.ts";
+import { prices } from "../backend/publication.ts";
+import { querySchema } from "../backend/contracts.ts";
+
+after(closeDb);
+await seedDictionary();
+test("监测内容重放去重、修订保留旧证据，并且不生成单摊报价或公开区间", async () => {
+  await saveSource({ ...anhuiSourcePreset(), config: { ...anhuiSourcePreset().config, terms_confirmed: true } }, "test", "仅固定本地样本");
+  const source = (await loadSource("anhui-hefei-monitoring"))!;
+  await sql`INSERT INTO market_source_runs(id,source_id,trigger) VALUES('monitoring-local-run',${source.source_id},'test')`;
+  const sample = parseAnhuiEnvelope(JSON.parse(await readFile(new URL("./fixtures/anhui-weekly-excerpt.json", import.meta.url), "utf8")));
+  const first = await sql.begin((db) => storeMonitoring(source, "monitoring-local-run", [sample], db));
+  const repeat = await sql.begin((db) => storeMonitoring(source, "monitoring-local-run", [sample], db));
+  assert.equal(first.created, 1); assert.equal(repeat.created, 0);
+  const corrected = structuredClone(sample);
+  corrected.response.data.newPrice[0].value = 3.01;
+  corrected.response.data.tablePrice.data[0].retailField = "3.01";
+  corrected.response.data.echartPrice.data[1].retailField = "3.01";
+  await sql.begin((db) => storeMonitoring(source, "monitoring-local-run", [corrected], db));
+  const snapshots = await monitoringSnapshots(source.source_id);
+  assert.equal(snapshots.length, 2);
+  assert.ok(snapshots.some((row) => row.reference.reference_series[0].points.at(-1)?.normalized_price === 2.99));
+  assert.equal((await sql`SELECT id FROM market_observations WHERE source_id=${source.source_id}`).length, 0);
+  assert.equal((await prices(querySchema.parse({ date: "2026-10-13" }))).data.length, 0);
+  await assert.rejects(saveSource({ ...anhuiSourcePreset(), region_code: "340000" }, "test", "验证已有地区不可改写"), /已有监测记录/);
+  const province = structuredClone(sample); province.query.regionCode = province.catalog.region.regionCode = "340000000"; province.catalog.region.regionName = "安徽省";
+  await assert.rejects(sql.begin((db) => storeMonitoring(source, "monitoring-local-run", [province], db)), /地区/);
+});

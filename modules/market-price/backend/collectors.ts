@@ -7,6 +7,8 @@ import { readable } from "@aihot/backend/content/extract";
 import { SITE } from "@aihot/site";
 import type { SourceRow } from "@aihot/backend/sources/types";
 import { candidateSchema, type Candidate, type Source } from "./contracts.ts";
+import { collectAnhuiWeekly } from "./anhui-source.ts";
+import type { AnhuiEnvelope } from "./anhui-preview.ts";
 
 export interface Document {
   source_url: string;
@@ -17,6 +19,7 @@ export interface Collected {
   items: Candidate[];
   documents: Document[];
   urls: string[];
+  monitoring?: AnhuiEnvelope[];
 }
 const string = (v: unknown) =>
   v === undefined || v === null ? null : String(v).trim();
@@ -137,6 +140,10 @@ export async function collect(source: Source): Promise<Collected> {
     throw new Error("无法核对 robots.txt，暂不采集");
   if (robots.status === 200 && !robotsAllowed(robots.text(), target.pathname))
     throw new Error("robots.txt 禁止访问该路径");
+  if (source.config.adapter === "anhui_weekly") {
+    const result = await collectAnhuiWeekly(source, (path) => robots.status === 404 || robotsAllowed(robots.text(), path));
+    return { items: [], documents: [], ...result };
+  }
   if (source.type === "rss_article") {
     const feed = await fetchRss({
       id: source.source_id,

@@ -16,6 +16,7 @@ import {
 import { generateBrief } from "./briefs.ts";
 import { beijingToday } from "./publication.ts";
 import type { Candidate } from "./contracts.ts";
+import { storeMonitoring } from "./monitoring.ts";
 
 const options = {
   policy: "short" as const,
@@ -130,6 +131,8 @@ export async function requestCollection(
   const source = await loadSource(source_id);
   if (!source || !source.enabled)
     throw Object.assign(new Error("信源不存在或已停用"), { statusCode: 400 });
+  if (!source.config.terms_confirmed)
+    throw Object.assign(new Error("请先确认来源条款允许采集"), { statusCode: 400 });
   if (["external", "user_report"].includes(source.type))
     throw Object.assign(new Error("该信源仅接受认证推送"), { statusCode: 400 });
   const run_id = sha256(`${source_id}:${key}`);
@@ -170,6 +173,12 @@ async function collectJob(job: {
     await ensureQueue(extractQueue.name, extractQueue.options);
     await ensureQueue(validateQueue.name, validateQueue.options);
     await sql.begin(async (db) => {
+      const monitoring = result.monitoring ?? [];
+      if (monitoring.length) {
+        const saved = await storeMonitoring(source, job.run_id, monitoring, db);
+        await db`INSERT INTO market_run_batches(run_id,batch_id,result) VALUES(${job.run_id},${`monitoring:${sha256(stableJson(monitoring))}`},${db.json({ processed: saved.processed, monitoring_created: saved.created })}) ON CONFLICT DO NOTHING`;
+        await db`UPDATE market_source_runs SET created_count=created_count+${saved.created} WHERE id=${job.run_id}`;
+      }
       for (let i = 0; i < result.items.length; i += 100) {
         const items = result.items.slice(i, i + 100);
         await enqueueOn(
@@ -190,7 +199,8 @@ async function collectJob(job: {
           db,
         );
       }
-      await db`UPDATE market_source_runs SET status='ok',finished_at=now(),fetched_urls=${db.json(result.urls)},parsed_count=${result.items.length},duration_ms=${Date.now() - started},stage='queued' WHERE id=${job.run_id}`;
+      await db`UPDATE market_source_runs SET status='ok',finished_at=now(),fetched_urls=${db.json(result.urls)},parsed_count=${result.items.length + monitoring.length},duration_ms=${Date.now() - started},stage='queued' WHERE id=${job.run_id}`;
+      if (!result.items.length && !result.documents.length) await finishRunIfComplete(job.run_id, db);
       await db`UPDATE market_sources SET last_success_at=now(),last_error=NULL,next_fetch_at=now()+interval_minutes*interval '1 minute' WHERE source_id=${source.source_id}`;
     });
   } catch (error) {

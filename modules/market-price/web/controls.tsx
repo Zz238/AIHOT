@@ -61,6 +61,8 @@ export const emptySource: SourceInput = {
   trust_score: 0.5,
   publisher_key: "",
   config: {
+    adapter: "generic",
+    goods_codes: [],
     method: "GET",
     items_path: "data",
     fields: {

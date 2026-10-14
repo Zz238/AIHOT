@@ -74,6 +74,10 @@ export async function saveSource(
   const value = sourceSchema.parse(input);
   return sql.begin(async (db) => {
     const before = await loadSource(value.source_id, db);
+    if (before?.config.adapter === "anhui_weekly" &&
+        (before.region_code !== value.region_code || value.config.adapter !== "anhui_weekly") &&
+        (await db`SELECT 1 FROM market_monitoring_snapshots WHERE source_id=${value.source_id} LIMIT 1`).length)
+      throw new Conflict("已有监测记录的地区和解析方式不能改写，请创建新信源");
     if (
       !(
         await db`SELECT 1 FROM market_regions WHERE region_code=${value.region_code}`

@@ -32,6 +32,8 @@ const envelopeSchema = z.strictObject({
     }),
   }),
 });
+export type AnhuiEnvelope = z.infer<typeof envelopeSchema>;
+export const parseAnhuiEnvelope = (input: unknown) => envelopeSchema.parse(input);
 
 function price(value: unknown): number | null {
   if (value === null || value === undefined || value === "" || value === "-") return null;
@@ -62,7 +64,7 @@ function rows(map: Record<string, string>, data: Record<string, unknown>[]) {
 }
 
 /** Interprets a local response and its saved query context; no fetch, database or publication. */
-export function previewAnhuiWeekly(input: unknown) {
+export function previewAnhuiWeekly(input: unknown, options: { offline?: boolean; termsConfirmed?: boolean } = {}) {
   const envelope = envelopeSchema.parse(input);
   const { query, catalog, response } = envelope;
   const data = response.data;
@@ -92,10 +94,10 @@ export function previewAnhuiWeekly(input: unknown) {
   }
 
   return {
-    offline: true,
+    offline: options.offline ?? true,
     read_only: true,
     source_url: sourcePage,
-    source_terms_confirmed: false,
+    source_terms_confirmed: options.termsConfirmed ?? false,
     direct_observation_import_allowed: false,
     query,
     region: { ...region, source_region_code: query.regionCode },
@@ -128,7 +130,8 @@ export function previewAnhuiWeekly(input: unknown) {
       "原站注明全省或各市均价；每周发布不代表已确认按整周交易计算的平均价。",
       "只保留实际监测日期，不补齐日价；图表和表格为同一数据，不增加独立样本。",
       "原站图表将零值按缺报显示；缺报保留空值，不插值。",
-      "网站使用许可尚未确认；仅用于本地验证，不进入单条报价样本池或公开价格接口。",
+      "地区监测均价独立保存，不进入单条报价样本池或公开价格接口。",
+      ...((options.termsConfirmed ?? false) ? [] : ["网站使用许可尚未确认；当前只做解析预览。"]),
     ],
   };
 }
