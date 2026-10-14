@@ -1,0 +1,23 @@
+{
+  "source_url": "https://ahjgxx.in.ah.cn/jfcx/sp/",
+  "query": {"tabCode":"100000","classCode":"101000","goodsCode":"101001","regionCode":"340100000","marketPrice":"0"},
+  "catalog": {
+    "product": {"category_code":"101000","code":"101001","name":"青椒","standard":"新鲜一级（薄皮椒）","unit":"元/500克"},
+    "region": {"regionCode":"340100000","regionName":"合肥市"}
+  },
+  "response": {
+    "code":200,
+    "data": {
+      "title":"青椒","date":"2026-10-13","unit":"元/500克","standardName":"新鲜一级（薄皮椒）",
+      "newPrice":[{"name":"零售价格","value":2.99},{"name":"批发价格","value":2}],
+      "tablePrice": {
+        "map":{"num":"序号","dateTime":"时间","retailField":"零售价格","wholesaleField":"批发价格"},
+        "data":[{"dateTime":"2026-10-13","retailField":"2.99","wholesaleField":"2.0"},{"dateTime":"2026-10-06","retailField":"2.96","wholesaleField":"2.2"}]
+      },
+      "echartPrice": {
+        "map":{"retailField":"零售价格","wholesaleField":"批发价格"},
+        "data":[{"dateTime":"2026-10-06","retailField":"2.96","wholesaleField":"2.2"},{"dateTime":"2026-10-13","retailField":"2.99","wholesaleField":"2.0"}]
+      }
+    }
+  }
+}
