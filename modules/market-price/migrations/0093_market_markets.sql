@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS market_markets (market_id text PRIMARY KEY, name text NOT NULL, region_code text NOT NULL REFERENCES market_regions(region_code), price_type text NOT NULL CHECK(price_type IN ('wholesale','retail','supermarket','user_report','unknown')), UNIQUE(region_code, name, price_type));

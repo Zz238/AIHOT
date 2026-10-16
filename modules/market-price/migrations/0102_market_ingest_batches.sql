@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS market_ingest_batches (source_id text NOT NULL REFERENCES market_sources(source_id), idempotency_key text NOT NULL, body_hash text NOT NULL, result jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(source_id,idempotency_key));

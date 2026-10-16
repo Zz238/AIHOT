@@ -1,0 +1,348 @@
+{
+  "captured_at": "2026-10-16T11:27:37.751Z",
+  "source_url": "https://ahjgxx.in.ah.cn/jfcx/sp/",
+  "categories": [
+    {
+      "code": "101000",
+      "name": "蔬菜"
+    },
+    {
+      "code": "102000",
+      "name": "粮油"
+    },
+    {
+      "code": "103000",
+      "name": "肉禽蛋"
+    },
+    {
+      "code": "104000",
+      "name": "水产品"
+    },
+    {
+      "code": "105000",
+      "name": "果奶"
+    }
+  ],
+  "goods": [
+    {
+      "code": "101001",
+      "name": "青椒",
+      "standard": "新鲜一级（薄皮椒）",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101002",
+      "name": "青菜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101003",
+      "name": "黄瓜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101004",
+      "name": "大白菜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101005",
+      "name": "西红柿",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101006",
+      "name": "芹菜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101007",
+      "name": "土豆",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101008",
+      "name": "白萝卜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101009",
+      "name": "冬瓜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101010",
+      "name": "紫茄子",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101011",
+      "name": "韭菜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101012",
+      "name": "油麦菜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101013",
+      "name": "平包菜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101014",
+      "name": "菠菜",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "101015",
+      "name": "西兰花",
+      "standard": "新鲜一级",
+      "unit": "元/500克",
+      "category_code": "101000",
+      "category_name": "蔬菜"
+    },
+    {
+      "code": "102005",
+      "name": "小麦粉",
+      "standard": "特一粉",
+      "unit": "元/500克",
+      "category_code": "102000",
+      "category_name": "粮油"
+    },
+    {
+      "code": "102006",
+      "name": "小麦粉",
+      "standard": "特二粉",
+      "unit": "元/500克",
+      "category_code": "102000",
+      "category_name": "粮油"
+    },
+    {
+      "code": "102007",
+      "name": "早籼米",
+      "standard": "二级",
+      "unit": "元/500克",
+      "category_code": "102000",
+      "category_name": "粮油"
+    },
+    {
+      "code": "102008",
+      "name": "中晚籼米",
+      "standard": "二级",
+      "unit": "元/500克",
+      "category_code": "102000",
+      "category_name": "粮油"
+    },
+    {
+      "code": "102001",
+      "name": "粳米",
+      "standard": "二级",
+      "unit": "元/500克",
+      "category_code": "102000",
+      "category_name": "粮油"
+    },
+    {
+      "code": "102002",
+      "name": "桶装菜籽油",
+      "standard": "非转基因压榨工艺",
+      "unit": "元/5升",
+      "category_code": "102000",
+      "category_name": "粮油"
+    },
+    {
+      "code": "102003",
+      "name": "桶装大豆油",
+      "standard": "金龙鱼非转基因",
+      "unit": "元/桶（5升）",
+      "category_code": "102000",
+      "category_name": "粮油"
+    },
+    {
+      "code": "102004",
+      "name": "桶装大豆油",
+      "standard": "金龙鱼转基因",
+      "unit": "元/桶（5升）",
+      "category_code": "102000",
+      "category_name": "粮油"
+    },
+    {
+      "code": "103001",
+      "name": "精瘦肉",
+      "standard": "精瘦肉",
+      "unit": "元/500克",
+      "category_code": "103000",
+      "category_name": "肉禽蛋"
+    },
+    {
+      "code": "103002",
+      "name": "后座统货",
+      "standard": "后座统货",
+      "unit": "元/500克",
+      "category_code": "103000",
+      "category_name": "肉禽蛋"
+    },
+    {
+      "code": "103003",
+      "name": "肋条肉",
+      "standard": "肋条肉",
+      "unit": "元/500克",
+      "category_code": "103000",
+      "category_name": "肉禽蛋"
+    },
+    {
+      "code": "103004",
+      "name": "牛肉",
+      "standard": "去骨肉",
+      "unit": "元/500克",
+      "category_code": "103000",
+      "category_name": "肉禽蛋"
+    },
+    {
+      "code": "103005",
+      "name": "羊肉",
+      "standard": "带骨肉",
+      "unit": "元/500克",
+      "category_code": "103000",
+      "category_name": "肉禽蛋"
+    },
+    {
+      "code": "103006",
+      "name": "鸡肉",
+      "standard": "白条鸡、开膛、上等",
+      "unit": "元/500克",
+      "category_code": "103000",
+      "category_name": "肉禽蛋"
+    },
+    {
+      "code": "103007",
+      "name": "鸡蛋",
+      "standard": "新鲜完整鸡场蛋",
+      "unit": "元/500克",
+      "category_code": "103000",
+      "category_name": "肉禽蛋"
+    },
+    {
+      "code": "104006",
+      "name": "鲫鱼",
+      "standard": "活350克左右一条",
+      "unit": "元/500克",
+      "category_code": "104000",
+      "category_name": "水产品"
+    },
+    {
+      "code": "104001",
+      "name": "鲢鱼",
+      "standard": "活750克左右一条（白鲢）",
+      "unit": "元/500克",
+      "category_code": "104000",
+      "category_name": "水产品"
+    },
+    {
+      "code": "104005",
+      "name": "鳙鱼",
+      "standard": "花鲢、胖头鱼，活1500克左右一条",
+      "unit": "元/500克",
+      "category_code": "104000",
+      "category_name": "水产品"
+    },
+    {
+      "code": "104004",
+      "name": "汪丫鱼",
+      "standard": "活100克左右一条",
+      "unit": "元/500克",
+      "category_code": "104000",
+      "category_name": "水产品"
+    },
+    {
+      "code": "104003",
+      "name": "鲈鱼",
+      "standard": "活750克左右一条",
+      "unit": "元/500克",
+      "category_code": "104000",
+      "category_name": "水产品"
+    },
+    {
+      "code": "104002",
+      "name": "带鱼",
+      "standard": "冷冻250克左右一条",
+      "unit": "元/500克",
+      "category_code": "104000",
+      "category_name": "水产品"
+    },
+    {
+      "code": "105001",
+      "name": "橙子",
+      "standard": "脐橙国产一级",
+      "unit": "元/500克",
+      "category_code": "105000",
+      "category_name": "果奶"
+    },
+    {
+      "code": "105002",
+      "name": "苹果",
+      "standard": "红富士一级",
+      "unit": "元/500克",
+      "category_code": "105000",
+      "category_name": "果奶"
+    },
+    {
+      "code": "105003",
+      "name": "香蕉",
+      "standard": "国产一级",
+      "unit": "元/500克",
+      "category_code": "105000",
+      "category_name": "果奶"
+    },
+    {
+      "code": "105004",
+      "name": "梨",
+      "standard": "香梨一级",
+      "unit": "元/500克",
+      "category_code": "105000",
+      "category_name": "果奶"
+    }
+  ]
+}

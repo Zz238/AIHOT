@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>历史离线解析样例</title></head>
+<body>
+<!--
+  根据已核实源事实重建的最小 HTML 片段，不是完整网页或当前行情。
+  原公开页面：https://cif.mofcom.gov.cn/cif/seach.fhtml?commdityid=170120
+  报价观测日期：2026-10-11。仅供离线解析测试，不得作为运行价格入库。
+-->
+<div class="zhouduzoushitu">
+  <div class="secondbiaotitle">
+    <span class="font25px">2026-10-11西红柿批发价格行情</span>
+    <span class="font14px000"> (单位：元/公斤)</span>
+  </div>
+  <form action="/cif/seach.fhtml?commdityid=170120" method="post">
+    <input name="searchDate" value="2026-10-11" readonly>
+  </form>
+  <table id="goaler">
+    <tr class="font14pxbold">
+      <td>地区</td><td>市场</td><td>当日价格</td><td>前一日价格</td><td>环比</td><td>走势图</td>
+    </tr>
+    <tr>
+      <td>安徽省</td>
+      <td>合肥周谷堆农产品批发市场股份有限公司</td>
+      <td>4.3</td><td>4.2</td><td>-2.33</td>
+      <td><div class="secondzsbg"><a href="seachline.fhtml?enterid=3994&amp;commdityid=170120&amp;Edate=2026-10-11">走势图</a></div></td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

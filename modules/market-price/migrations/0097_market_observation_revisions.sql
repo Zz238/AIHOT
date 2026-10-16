@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS market_observation_revisions (id bigserial PRIMARY KEY, observation_id text NOT NULL REFERENCES market_observations(id), version integer NOT NULL, actor text NOT NULL, reason text NOT NULL, before_data jsonb, after_data jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(observation_id, version));

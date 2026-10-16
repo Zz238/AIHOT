@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS market_product_aliases (product_id text NOT NULL REFERENCES market_products(product_id), alias text NOT NULL, variant text NOT NULL DEFAULT '', PRIMARY KEY(alias, variant));

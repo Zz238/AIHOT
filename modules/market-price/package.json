@@ -1,0 +1,7 @@
+{
+  "name": "@aihot/market-price",
+  "private": true,
+  "type": "module",
+  "exports": { "./*": "./*.ts" },
+  "dependencies": { "@aihot/backend": "*", "@aihot/contracts": "*", "@aihot/web": "*", "cheerio": "1.2.0", "fastify": "5.12.5", "zod": "4.6.5" }
+}
