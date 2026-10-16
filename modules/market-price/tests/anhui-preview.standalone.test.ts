@@ -76,3 +76,30 @@ test("日期、规格、图表或最新价冲突明确失败，不猜测不发�
     (value: typeof fixture) => { value.source_url += "?password=not-a-real-secret"; },
   ]) { const value = sample(); change(value); assert.throws(() => previewAnhuiWeekly(value)); }
 });
+
+test("五升桶装油保留容量价，目录和响应的等价单位不推算斤价", () => {
+  const value = sample();
+  value.query.classCode = value.catalog.product.category_code = "102000";
+  value.query.goodsCode = value.catalog.product.code = "102002";
+  value.catalog.product.name = value.response.data.title = "桶装菜籽油";
+  value.catalog.product.standard = value.response.data.standardName = "非转基因压榨工艺";
+  value.catalog.product.unit = "元/5升"; value.response.data.unit = "元/桶（5升）";
+  const result = previewAnhuiWeekly(value);
+  const point = result.reference_series[0].points.at(-1)!;
+  assert.equal(point.normalized_price, null);
+  assert.equal(point.display_price, 2.99);
+  assert.equal(point.display_unit, "元/桶（5升）");
+  assert.equal(point.status, "reference_only");
+});
+
+test("只有零售列时保留记录，未提供的批发列为空而非估算", () => {
+  const value = sample();
+  for (const section of [value.response.data.tablePrice, value.response.data.echartPrice]) {
+    const key = Object.keys(section.map).find(key => section.map[key] === "批发价格")!;
+    delete section.map[key]; section.data.forEach((row: Record<string, unknown>) => delete row[key]);
+  }
+  value.response.data.newPrice = value.response.data.newPrice.filter((row: { name: string }) => row.name !== "批发价格");
+  const result = previewAnhuiWeekly(value);
+  assert.ok(result.reference_series[1].points.every(point => point.display_price === null));
+  assert.equal(result.reference_series[0].points.at(-1)!.display_price, 2.99);
+});

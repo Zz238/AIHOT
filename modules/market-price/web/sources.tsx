@@ -327,7 +327,7 @@ export function Sources({
             </div>
             <Field
               label="解析与分页配置"
-              hint={edit.config.adapter === "anhui_weekly" ? "goods_codes 选择需查询的商品，最多 10 个；来源使用范围确认后才将 terms_confirmed 设为 true" : "fields 为 JSON 路径或表格 CSS 选择器；terms_confirmed 需核对来源许可后设为 true；认证只填写环境变量名"}
+              hint={edit.config.adapter === "anhui_weekly" ? "goods_codes 选择官网商品，最多 50 个；来源使用范围确认后才将 terms_confirmed 设为 true" : "fields 为 JSON 路径或表格 CSS 选择器；terms_confirmed 需核对来源许可后设为 true；认证只填写环境变量名"}
             >
               <Textarea
                 rows={12}

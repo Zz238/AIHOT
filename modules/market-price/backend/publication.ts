@@ -17,12 +17,12 @@ export function monitoringReference(input: unknown, collectedAt: string | Date) 
   const retail = ref.reference_series.find(series => series.price_type === "retail")!;
   const wholesale = ref.reference_series.find(series => series.price_type === "wholesale")!;
   const history = retail.points.map((point, index) => ({
-    date: point.reference_date, retail: point.normalized_price, wholesale: wholesale.points[index].normalized_price,
+    date: point.reference_date, retail: point.display_price, wholesale: wholesale.points[index].display_price,
   }));
   return {
     goods_code: ref.product.source_goods_code, name: ref.product.name, variant: ref.product.variant,
     category_code: ref.query.classCode, region_code: ref.region.region_code,
-    latest_reference_date: ref.latest_reference_date, unit: "元/斤" as const,
+    latest_reference_date: ref.latest_reference_date, unit: ref.product.unit, source_unit: ref.product.source_unit,
     latest: { retail: history.at(-1)!.retail, wholesale: history.at(-1)!.wholesale }, history,
     collected_at: new Date(collectedAt).toISOString(),
   };
@@ -33,7 +33,7 @@ export function monitoringResponse(regionCode: string, data: ReturnType<typeof m
   return {
     source_name: "安徽价格信息", source_url: "https://ahjgxx.in.ah.cn/jfcx/sp/",
     region_code: region.region_code, region_name: region.name, scope: region.scope,
-    publication_frequency: "weekly", data,
+    publication_frequency: "weekly", data: data.filter(product => product.history.some(point => point.retail !== null || point.wholesale !== null)),
     notice: "各市监测均价，按原始监测日期展示；仅供参考，不作为交易依据。缺报留空，不补齐日价。",
   };
 }

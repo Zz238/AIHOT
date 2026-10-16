@@ -46,7 +46,7 @@ export const candidateSchema = z.strictObject({
 export type Candidate = z.infer<typeof candidateSchema>;
 export const sourceConfigSchema = z.strictObject({
   adapter: z.enum(["generic", "anhui_weekly"]).default("generic"),
-  goods_codes: z.array(z.string().regex(/^10[1-5]\d{3}$/)).max(10).default([]),
+  goods_codes: z.array(z.string().regex(/^10[1-5]\d{3}$/)).max(50).default([]),
   method: z.enum(["GET", "POST"]).default("GET"),
   auth_env: z
     .string()

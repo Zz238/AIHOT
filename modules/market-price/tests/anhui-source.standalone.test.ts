@@ -45,3 +45,14 @@ test("所需路径被禁止时不发请求；读取错误不泄露前端访问�
   await assert.rejects(collectAnhuiWeekly(source, () => true, failing), (error: Error) => !error.message.includes("password") && /读取失败/.test(error.message));
   assert.throws(() => sourceSchema.parse({ ...anhuiSourcePreset(), region_code: "310100" }));
 });
+
+test("官网明确未找到数据时不生成商品记录，也不使整市采集失败", async () => {
+  const missing: typeof fetchListing = async (input, options) => {
+    if (!new URL(input).searchParams.has("goodsCode")) return reader(input, options);
+    const body = JSON.stringify({ code: 200, message: "未找到数据" });
+    return { status: 200, url: input, headers: new Headers(), body: Buffer.from(body), text: () => body };
+  };
+  const result = await collectAnhuiWeekly(source, () => true, missing);
+  assert.equal(result.monitoring.length, 0);
+  assert.equal(anhuiSourcePreset().config.goods_codes.length, 40);
+});

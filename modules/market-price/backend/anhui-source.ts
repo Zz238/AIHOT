@@ -5,6 +5,7 @@ import { fetchListing } from "@aihot/backend/sources/listing-fetch";
 import { sourceSchema, type Source } from "./contracts.ts";
 import { parseAnhuiEnvelope, previewAnhuiWeekly, type AnhuiEnvelope } from "./anhui-preview.ts";
 import { anhuiRegion, anhuiRegions } from "./anhui-regions.ts";
+import catalog from "../anhui-catalog.json" with { type: "json" };
 
 const origin = "https://ahjgxx.in.ah.cn";
 const page = `${origin}/jfcx/sp/`;
@@ -29,7 +30,7 @@ export function anhuiSourcePreset(regionCode = "340100") {
     source_id: regionCode === "340100" ? "anhui-hefei-monitoring" : `anhui-${regionCode}-monitoring`, name: `安徽价格信息 · ${region.name}每周监测`,
     type: "html_table", url: page, region_code: regionCode, price_type: "unknown",
     publisher_key: "anhui-price-monitoring-bureau", interval_minutes: 10080,
-    enabled: false, config: { adapter: "anhui_weekly", goods_codes: ["101001", "101005", "103007"] },
+    enabled: false, config: { adapter: "anhui_weekly", goods_codes: catalog.goods.map(product => product.code) },
   });
 }
 
@@ -93,9 +94,11 @@ export async function collectAnhuiWeekly(
     const product = goods.get(goodsCode);
     if (!product) throw new Error(`安徽来源未提供商品 ${goodsCode}`);
     const parameters = { tabCode: "100000", classCode: `${goodsCode.slice(0, 3)}000`, goodsCode, regionCode: sourceRegionCode, marketPrice: "0" };
+    const response = await query("prices", parameters);
+    if (response.code === 200 && response.message === "未找到数据" && !response.data) continue;
     const envelope = parseAnhuiEnvelope({ source_url: page, query: parameters,
       catalog: { product: { ...product, category_code: parameters.classCode }, region },
-      response: await query("prices", parameters),
+      response,
     });
     previewAnhuiWeekly(envelope);
     monitoring.push(envelope);

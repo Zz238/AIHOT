@@ -5,6 +5,12 @@ import { normalizeUnit } from "./normalize.ts";
 import { anhuiRegion } from "./anhui-regions.ts";
 
 const sourcePage = "https://ahjgxx.in.ah.cn/jfcx/sp/";
+/** Weight and five-litre packages are separate dimensions; never infer oil density. */
+export function monitoringUnit(unit: string) {
+  if (normalizeUnit(1, unit)) return "元/斤";
+  if (["元/5升", "元/桶（5升）"].includes(unit)) return "元/桶（5升）";
+  throw new Error("监测单位尚未核实");
+}
 const text = z.string().trim().min(1).max(200);
 const envelopeSchema = z.strictObject({
   source_url: z.literal(sourcePage),
@@ -49,17 +55,19 @@ function price(value: unknown): number | null {
 function rows(map: Record<string, string>, data: Record<string, unknown>[]) {
   const columns = ["零售价格", "批发价格"].map((label) => {
     const keys = Object.keys(map).filter((key) => map[key] === label);
-    if (keys.length !== 1) throw new Error("零售或批发列缺失、重复，需重新核实源结构");
-    return { key: keys[0], label, type: label === "零售价格" ? "retail" as const : "wholesale" as const };
+    if (keys.length > 1) throw new Error("零售或批发列重复，需重新核实源结构");
+    return { key: keys[0] ?? null, label, type: label === "零售价格" ? "retail" as const : "wholesale" as const };
   });
+  if (columns.every(column => column.key === null)) throw new Error("监测表没有价格列");
   const dates = new Set<string>();
   return data.map((row) => {
     const date = calendarDate.parse(row.dateTime);
     if (dates.has(date)) throw new Error("同一监测日期重复，不能增加样本数");
     dates.add(date);
     return { date, values: columns.map((column) => {
-      if (!Object.hasOwn(row, column.key)) throw new Error("监测行缺少已声明的价格字段");
-      return { ...column, raw: row[column.key], value: price(row[column.key]) };
+      if (column.key !== null && !Object.hasOwn(row, column.key)) throw new Error("监测行缺少已声明的价格字段");
+      const raw = column.key === null ? null : row[column.key];
+      return { ...column, raw, value: price(raw) };
     }) };
   }).sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -73,11 +81,16 @@ export function previewAnhuiWeekly(input: unknown, options: { offline?: boolean;
   const region = anhuiRegion(query.regionCode)!;
   if (catalog.region.regionCode !== query.regionCode || catalog.region.regionName !== region.name)
     throw new Error("查询地区和来源地区目录冲突");
+  const compact = (value: string) => value.replace(/\s/g, "");
+  // The live apple price response is more specific than its own goods directory.
+  const standardMatches = compact(catalog.product.standard) === compact(data.standardName) ||
+    query.goodsCode === "105002" && catalog.product.standard === "红富士一级" && compact(data.standardName) === "红富士一级75mm";
   if (catalog.product.code !== query.goodsCode || catalog.product.category_code !== query.classCode ||
       !query.goodsCode.startsWith(query.classCode.slice(0, 3)) ||
-      catalog.product.name !== data.title || catalog.product.standard !== data.standardName || catalog.product.unit !== data.unit)
+      catalog.product.name !== data.title || !standardMatches ||
+      monitoringUnit(catalog.product.unit) !== monitoringUnit(data.unit))
     throw new Error("查询商品、来源目录、规格或单位冲突");
-  if (!normalizeUnit(1, data.unit)) throw new Error("监测单位不能明确换算为元/斤");
+  const displayUnit = monitoringUnit(data.unit);
   if (data.tablePrice.map.dateTime !== "时间") throw new Error("监测表日期列定义已改变");
   const table = rows(data.tablePrice.map, data.tablePrice.data);
   const chart = rows(data.echartPrice.map, data.echartPrice.data);
@@ -88,7 +101,7 @@ export function previewAnhuiWeekly(input: unknown, options: { offline?: boolean;
   if (data.date !== latest.date) throw new Error("页头日期和最新监测表行不一致");
   for (const column of latest.values) {
     const headers = data.newPrice.filter((entry) => entry.name === column.label);
-    if (headers.length !== 1 || price(headers[0].value) !== column.value)
+    if (column.key === null ? headers.length !== 0 : headers.length !== 1 || price(headers[0].value) !== column.value)
       throw new Error("页头价格和最新监测表行不一致");
   }
 
@@ -100,7 +113,7 @@ export function previewAnhuiWeekly(input: unknown, options: { offline?: boolean;
     direct_observation_import_allowed: false,
     query,
     region: { ...region, source_region_code: query.regionCode },
-    product: { source_goods_code: query.goodsCode, name: data.title, variant: data.standardName },
+    product: { source_goods_code: query.goodsCode, name: data.title, variant: data.standardName, unit: displayUnit, source_unit: data.unit },
     publication_frequency: "weekly",
     statistic_kind: "regional_monitoring_mean",
     statistic_period: null,
@@ -110,15 +123,17 @@ export function previewAnhuiWeekly(input: unknown, options: { offline?: boolean;
       source_label: label,
       points: table.map(({ date, values }) => {
         const column = values.find((value) => value.type === type)!;
-        const normalized = column.value === null ? null : normalizeUnit(column.value, data.unit)!;
+        const normalized = column.value === null ? null : normalizeUnit(column.value, data.unit);
         return {
           reference_date: date,
           source_record_id: null,
           raw_price: column.raw ?? null,
           raw_unit: data.unit,
           normalized_price: normalized?.price ?? null,
-          normalized_unit: "元/斤",
-          status: normalized ? "reference_only" : "missing",
+          normalized_unit: displayUnit === "元/斤" ? "元/斤" : null,
+          display_price: normalized?.price ?? column.value,
+          display_unit: displayUnit,
+          status: column.value !== null ? "reference_only" : "missing",
           preview_identity: `preview:${sha256(stableJson([query.regionCode, query.goodsCode, query.marketPrice, type, date]))}`,
           evidence_text: `${region.name} | ${data.title} | ${data.standardName} | ${date} | ${label}: ${column.raw ?? "缺报"} ${data.unit} | 地区均价，具体采样方法未说明`,
         };
